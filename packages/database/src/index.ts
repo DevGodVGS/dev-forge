@@ -259,3 +259,40 @@ export class DevForgeDataStore {
 export const devForgeStore = new DevForgeDataStore();
 
 export * from './crypto';
+
+import { PrismaClient } from '@prisma/client';
+
+let globalPrisma: PrismaClient | null = null;
+
+export function getPrismaClient(): PrismaClient {
+  if (!globalPrisma) {
+    try {
+      globalPrisma = new PrismaClient({
+        datasources: {
+          db: {
+            url: process.env.DATABASE_URL || 'postgresql://devforge:devforge_dev_password@localhost:5432/devforge?schema=public'
+          }
+        }
+      });
+    } catch {
+      // Fallback
+      globalPrisma = new PrismaClient();
+    }
+  }
+  return globalPrisma;
+}
+
+export async function checkDatabaseHealth(): Promise<{ connected: boolean; latencyMs: number; error?: string }> {
+  const start = Date.now();
+  if (process.env.DATABASE_URL) {
+    try {
+      const client = getPrismaClient();
+      await client.$queryRaw`SELECT 1`;
+      return { connected: true, latencyMs: Date.now() - start };
+    } catch (err: any) {
+      return { connected: false, latencyMs: Date.now() - start, error: err.message };
+    }
+  }
+  // Local/in-memory rig active
+  return { connected: true, latencyMs: Date.now() - start };
+}
