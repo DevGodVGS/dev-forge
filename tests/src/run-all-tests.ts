@@ -6,6 +6,7 @@ import { testAuthSecurity } from './auth.test';
 import { testAuthGuardSecurity } from './auth-guard.test';
 import { testAiLiveAdapters } from './ai-live-adapters.test';
 import { testDbPrisma } from './db-prisma.test';
+import { testGitHubClientLive } from './github-live.test';
 
 async function main() {
   console.log('\n================================================================');
@@ -18,6 +19,7 @@ async function main() {
     testAuthGuardSecurity,
     testDbPrisma,
     testAiLiveAdapters,
+    testGitHubClientLive,
     testApiE2E,
     testWorkflowA,
     testWorkflowB
