@@ -7,7 +7,11 @@
     "build": "pnpm -r run build",
     "test": "pnpm -r run test",
     "typecheck": "pnpm -r run typecheck",
-    "lint": "pnpm -r run lint"
+    "lint": "pnpm -r run lint",
+    "dev:api": "pnpm --filter @devforge/api dev",
+    "dev:web": "pnpm --filter @devforge/web dev",
+    "start:api": "pnpm --filter @devforge/api start",
+    "start:web": "pnpm --filter @devforge/web start"
   },
   "devDependencies": {
     "@types/node": "^20.12.12",
