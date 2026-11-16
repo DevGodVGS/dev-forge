@@ -1,4 +1,5 @@
 import React from 'react';
+import { revalidatePath } from 'next/cache';
 import { 
   ShieldAlert, 
   Play, 
@@ -39,6 +40,7 @@ export default async function AuditsPage() {
         <form action={async () => {
           'use server';
           await ApiClient.triggerAudit(repo.id);
+          revalidatePath('/audits');
         }}>
           <button
             type="submit"

@@ -1,4 +1,5 @@
 import React from 'react';
+import { revalidatePath } from 'next/cache';
 import { 
   GitPullRequest, 
   ShieldCheck, 
@@ -39,6 +40,7 @@ export default async function PullRequestsPage() {
             <form action={async () => {
               'use server';
               await ApiClient.triggerReview(pr.id);
+              revalidatePath('/pull-requests');
             }}>
               <button
                 type="submit"
@@ -52,6 +54,7 @@ export default async function PullRequestsPage() {
             <form action={async () => {
               'use server';
               await ApiClient.approvePullRequest(pr.id);
+              revalidatePath('/pull-requests');
             }}>
               <button
                 type="submit"
@@ -160,6 +163,7 @@ export default async function PullRequestsPage() {
             <form action={async () => {
               'use server';
               await ApiClient.approvePullRequest(pr.id);
+              revalidatePath('/pull-requests');
             }}>
               <button
                 type="submit"

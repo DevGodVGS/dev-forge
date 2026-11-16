@@ -4,11 +4,21 @@ import { devForgeStore } from '@devforge/database';
 
 @Controller('api/v1/github')
 export class GitHubController {
+  private processedDeliveries = new Set<string>();
+
   @Post('webhooks')
   async handleWebhook(
     @Headers('x-hub-signature-256') signature: string,
+    @Headers('x-github-delivery') deliveryId: string,
     @Body() payload: any
   ) {
+    // Idempotency check: ignore duplicate webhook deliveries
+    if (deliveryId && this.processedDeliveries.has(deliveryId)) {
+      return { received: true, duplicate: true, timestamp: new Date().toISOString() };
+    }
+    if (deliveryId) {
+      this.processedDeliveries.add(deliveryId);
+    }
     const webhookSecret = process.env.GITHUB_WEBHOOK_SECRET || 'devforge-secret-key';
     const rawPayload = JSON.stringify(payload);
 

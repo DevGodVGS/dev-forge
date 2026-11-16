@@ -33,7 +33,8 @@ export class AIService {
 
   async generateWithFallback(
     primaryProvider: AIProviderName, 
-    request: GenerateTextRequest
+    request: GenerateTextRequest,
+    timeoutMs = 30000
   ): Promise<GenerateTextResponse> {
     const fallbackOrder: AIProviderName[] = [
       primaryProvider,
@@ -47,7 +48,10 @@ export class AIService {
     for (const provider of fallbackOrder) {
       try {
         const adapter = this.getAdapter(provider);
-        const response = await adapter.generateText(request);
+        const timeoutPromise = new Promise<never>((_, reject) => 
+          setTimeout(() => reject(new Error(`AI generation timed out after ${timeoutMs}ms on provider ${provider}`)), timeoutMs)
+        );
+        const response = await Promise.race([adapter.generateText(request), timeoutPromise]);
         this.accountant.recordUsage(request.model, response.usage, response.latencyMs);
         return response;
       } catch (err: unknown) {

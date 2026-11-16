@@ -199,6 +199,7 @@ model AuditRun {
   findings     Finding[]
   coverages    AuditCoverage[]
 
+  @@index([repositoryId, status])
   @@map("audit_runs")
 }
 
@@ -235,6 +236,8 @@ model Finding {
   auditRun           AuditRun          @relation(fields: [auditRunId], references: [id], onDelete: Cascade)
   repository         Repository        @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
 
+  @@index([auditRunId, severity])
+  @@index([repositoryId, status])
   @@map("findings")
 }
 
@@ -257,6 +260,8 @@ model PullRequest {
   reviewIterations    ReviewIteration[]
 
   @@unique([repositoryId, githubPrNumber])
+  @@index([repositoryId, status])
+  @@index([aiReviewStatus, humanApprovalStatus])
   @@map("pull_requests")
 }
 
@@ -317,6 +322,7 @@ model WorkflowExecution {
   repository     Repository     @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
   steps          WorkflowStep[]
 
+  @@index([organizationId, status])
   @@map("workflow_executions")
 }
 
@@ -349,5 +355,6 @@ model AuditLog {
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   actor          User         @relation(fields: [actorId], references: [id], onDelete: Cascade)
 
+  @@index([organizationId, createdAt])
   @@map("audit_logs")
 }
