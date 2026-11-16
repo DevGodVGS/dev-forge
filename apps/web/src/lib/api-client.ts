@@ -190,6 +190,13 @@ export class ApiClient {
     return this.fetch<Repository[]>('/repositories');
   }
 
+  static async connectRepository(fullName: string, cloneUrl?: string): Promise<Repository> {
+    return this.fetch<Repository>('/repositories/connect', {
+      method: 'POST',
+      body: JSON.stringify({ fullName, cloneUrl })
+    });
+  }
+
   static async getAudits(repoId: string): Promise<AuditRun[]> {
     return this.fetch<AuditRun[]>(`/audits/repository/${repoId}`);
   }
