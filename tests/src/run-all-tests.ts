@@ -5,6 +5,7 @@ import { testApiE2E } from './api-e2e.test';
 import { testAuthSecurity } from './auth.test';
 import { testAuthGuardSecurity } from './auth-guard.test';
 import { testAiLiveAdapters } from './ai-live-adapters.test';
+import { testDbPrisma } from './db-prisma.test';
 
 async function main() {
   console.log('\n================================================================');
@@ -15,6 +16,7 @@ async function main() {
     testSecurityAudit,
     testAuthSecurity,
     testAuthGuardSecurity,
+    testDbPrisma,
     testAiLiveAdapters,
     testApiE2E,
     testWorkflowA,
