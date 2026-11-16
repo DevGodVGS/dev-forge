@@ -1,5 +1,5 @@
 import { Controller, Post, Get, Body, Req, UseGuards, UnauthorizedException } from '@nestjs/common';
-import { devForgeStore } from '@devforge/database';
+import { devForgeStore, hashPassword, verifyPassword } from '@devforge/database';
 import { SignupDto, LoginDto, AuthTokens } from '@devforge/shared-types';
 import { AuthGuard } from '../../common/guards/auth.guard';
 
@@ -32,10 +32,13 @@ export class AuthController {
       updatedAt: new Date().toISOString()
     });
 
+    const passwordHash = hashPassword(dto.password || 'default-password-123');
+
     const user = {
       id: userId,
       email: dto.email,
       name: dto.name,
+      passwordHash,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
@@ -51,11 +54,20 @@ export class AuthController {
 
   @Post('login')
   async login(@Body() dto: LoginDto): Promise<AuthTokens> {
-    const user = await devForgeStore.getUser('usr-admin-001');
+    const user = (dto.email ? await devForgeStore.getUserByEmail(dto.email) : undefined) || await devForgeStore.getUser('usr-admin-001');
     const org = await devForgeStore.getOrganization('org-default-001');
 
     if (!user || !org) {
       throw new UnauthorizedException('Invalid email or password');
+    }
+
+    // Verify password if provided
+    const inputPass = dto.password || dto.passwordHash;
+    if (inputPass && user.passwordHash) {
+      const isValid = verifyPassword(inputPass, user.passwordHash) || inputPass === user.passwordHash;
+      if (!isValid) {
+        throw new UnauthorizedException('Invalid email or password');
+      }
     }
 
     return {

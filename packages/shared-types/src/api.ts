@@ -22,7 +22,8 @@ export interface ApiResponse<T> {
 
 export interface LoginDto {
   email: string;
-  passwordHash: string;
+  password?: string;
+  passwordHash?: string;
 }
 
 export interface SignupDto {
