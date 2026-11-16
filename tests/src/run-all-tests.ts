@@ -2,6 +2,7 @@ import { testWorkflowA } from './workflow-a.test';
 import { testWorkflowB } from './workflow-b.test';
 import { testSecurityAudit } from './security-audit.test';
 import { testApiE2E } from './api-e2e.test';
+import { testAuthSecurity } from './auth.test';
 
 async function main() {
   console.log('\n================================================================');
@@ -10,6 +11,7 @@ async function main() {
 
   const suites = [
     testSecurityAudit,
+    testAuthSecurity,
     testApiE2E,
     testWorkflowA,
     testWorkflowB

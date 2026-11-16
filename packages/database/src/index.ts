@@ -61,6 +61,7 @@ export class DevForgeDataStore {
       id: userId,
       email: 'alex@acme.com',
       name: 'Alex Rivera (Lead Architect)',
+      passwordHash: '8b7f8c12e5:a0b1c2d3e4f5',
       avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=faces',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
@@ -256,3 +257,5 @@ export class DevForgeDataStore {
 
 // Global Singleton Store Instance
 export const devForgeStore = new DevForgeDataStore();
+
+export * from './crypto';
