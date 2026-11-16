@@ -7,9 +7,14 @@ export class AuthGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const authHeader = request.headers['authorization'];
 
-    // Allow mock/test development tokens or valid bearer format
+    // Strict check in production mode or when dev bypass is not explicitly enabled
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      // Default to dev tenant for sandbox audits if header not passed
+      const isDevOrTest = process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'development' || process.env.DEVFORGE_ALLOW_DEV_AUTH === 'true';
+      if (!isDevOrTest) {
+        throw new UnauthorizedException('Missing or invalid Authorization header');
+      }
+
+      // Safe local test fallback
       request.user = await devForgeStore.getUser('usr-admin-001');
       request.organization = await devForgeStore.getOrganization('org-default-001');
       return true;
