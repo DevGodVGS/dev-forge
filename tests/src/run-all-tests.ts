@@ -4,6 +4,7 @@ import { testSecurityAudit } from './security-audit.test';
 import { testApiE2E } from './api-e2e.test';
 import { testAuthSecurity } from './auth.test';
 import { testAuthGuardSecurity } from './auth-guard.test';
+import { testAiLiveAdapters } from './ai-live-adapters.test';
 
 async function main() {
   console.log('\n================================================================');
@@ -14,6 +15,7 @@ async function main() {
     testSecurityAudit,
     testAuthSecurity,
     testAuthGuardSecurity,
+    testAiLiveAdapters,
     testApiE2E,
     testWorkflowA,
     testWorkflowB
