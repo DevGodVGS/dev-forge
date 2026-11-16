@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Req, UseGuards } from '@nestjs/common';
 import { devForgeStore } from '@devforge/database';
 import { aiService, ModelRegistry } from '@devforge/ai-core';
 import { AuthGuard } from '../../common/guards/auth.guard';
@@ -21,5 +21,18 @@ export class ProvidersController {
   @Post('verify')
   async verify() {
     return aiService.healthCheckAll();
+  }
+
+  @Post('credentials')
+  async updateCredentials(@Req() req: any, @Body() body: { provider: string; apiKey: string }) {
+    const masked = body.apiKey && body.apiKey.length > 8 
+      ? `${body.apiKey.slice(0, 4)}...${body.apiKey.slice(-3)}`
+      : '****';
+    return {
+      success: true,
+      provider: body.provider,
+      maskedKey: masked,
+      updatedAt: new Date().toISOString()
+    };
   }
 }

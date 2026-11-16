@@ -8,6 +8,7 @@ import { testAiLiveAdapters } from './ai-live-adapters.test';
 import { testDbPrisma } from './db-prisma.test';
 import { testGitHubClientLive } from './github-live.test';
 import { testWebRepositoryOnboarding } from './web-onboarding.test';
+import { testSettingsProviderCredentials } from './settings-providers.test';
 
 async function main() {
   console.log('\n================================================================');
@@ -22,6 +23,7 @@ async function main() {
     testAiLiveAdapters,
     testGitHubClientLive,
     testWebRepositoryOnboarding,
+    testSettingsProviderCredentials,
     testApiE2E,
     testWorkflowA,
     testWorkflowB

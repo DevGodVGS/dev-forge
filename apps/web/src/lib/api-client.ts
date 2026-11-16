@@ -221,6 +221,19 @@ export class ApiClient {
     return this.fetch<any>('/providers');
   }
 
+  static async verifyProviders(): Promise<any> {
+    return this.fetch('/providers/verify', {
+      method: 'POST'
+    });
+  }
+
+  static async updateProviderCredentials(provider: string, apiKey: string): Promise<any> {
+    return this.fetch('/providers/credentials', {
+      method: 'POST',
+      body: JSON.stringify({ provider, apiKey })
+    });
+  }
+
   static async triggerAudit(repoId: string): Promise<any> {
     return this.fetch('/audits', {
       method: 'POST',
