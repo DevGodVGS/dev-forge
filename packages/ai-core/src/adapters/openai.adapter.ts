@@ -1,0 +1,118 @@
+import { 
+  AIProviderName, 
+  GenerateTextRequest, 
+  GenerateTextResponse, 
+  GenerateStructuredRequest, 
+  GenerateStructuredResponse, 
+  StreamChunk, 
+  ProviderHealthCheck, 
+  TokenUsage 
+} from '@devforge/shared-types';
+import { IAIProviderAdapter, StreamTextRequest } from '../types';
+import { calculateModelCost } from '../pricing';
+
+export class OpenAIAdapter implements IAIProviderAdapter {
+  readonly provider = AIProviderName.OPENAI;
+  private apiKey: string;
+
+  constructor(apiKey = process.env.OPENAI_API_KEY || 'sk-openai-mock-key') {
+    this.apiKey = apiKey;
+  }
+
+  async generateText(request: GenerateTextRequest): Promise<GenerateTextResponse> {
+    const startTime = Date.now();
+    const promptLength = request.messages.reduce((acc, m) => acc + m.content.length, 0);
+    const promptTokens = Math.max(12, Math.round(promptLength / 4));
+    const completionTokens = Math.min(request.maxTokens || 1024, 220);
+
+    const text = `[OpenAI ${request.model}] Backend concurrency and memory leak evaluation completed. No unbounded promises or circular event listeners detected.`;
+    const latencyMs = Date.now() - startTime + 90;
+
+    const usage: TokenUsage = {
+      promptTokens,
+      completionTokens,
+      totalTokens: promptTokens + completionTokens
+    };
+
+    return {
+      text,
+      usage,
+      costUsd: this.calculateCost(request.model, usage),
+      model: request.model,
+      latencyMs
+    };
+  }
+
+  async generateStructured<T>(request: GenerateStructuredRequest<T>): Promise<GenerateStructuredResponse<T>> {
+    const startTime = Date.now();
+    const promptLength = request.messages.reduce((acc, m) => acc + m.content.length, 0);
+    const promptTokens = Math.max(16, Math.round(promptLength / 4));
+    const completionTokens = Math.min(request.maxTokens || 2048, 380);
+
+    let data: unknown;
+    if (request.schemaDescription.includes('Finding')) {
+      data = [
+        {
+          title: 'Unbounded In-Memory Cache Growth Under High Load',
+          description: 'Map cache in SessionService does not evict expired entries or enforce size limits.',
+          category: 'BACKEND',
+          severity: 'HIGH',
+          confidence: 'HIGH',
+          filePath: 'apps/api/src/auth/session.service.ts',
+          lineNumber: 88,
+          evidence: 'private cache = new Map<string, Session>(); // Never clears keys',
+          recommendation: 'Replace with LRU cache or Redis with explicit TTL expiration.',
+          acceptanceCriteria: ['Configured TTL policy for cache entries', 'Added unit test asserting size limits under load']
+        }
+      ];
+    } else if (request.schemaDescription.includes('Review')) {
+      data = {
+        verdict: 'APPROVE',
+        summary: 'Cache migration verified with LRU bounded capacity. Memory bounds checked.',
+        comments: []
+      };
+    } else {
+      data = { success: true, processed: true };
+    }
+
+    const latencyMs = Date.now() - startTime + 95;
+    const usage: TokenUsage = {
+      promptTokens,
+      completionTokens,
+      totalTokens: promptTokens + completionTokens
+    };
+
+    return {
+      data: data as T,
+      rawText: JSON.stringify(data),
+      usage,
+      costUsd: this.calculateCost(request.model, usage),
+      model: request.model,
+      latencyMs
+    };
+  }
+
+  async *streamText(request: StreamTextRequest): AsyncIterable<StreamChunk> {
+    const tokens = ['[OpenAI]', ' Evaluating', ' backend', ' event-loop', ' health', ' and', ' database', ' pool', ' status...'];
+    for (const delta of tokens) {
+      if (request.onChunk) request.onChunk(delta);
+      yield { delta, isComplete: false };
+    }
+    yield { 
+      delta: '', 
+      isComplete: true, 
+      usage: { promptTokens: 35, completionTokens: 12, totalTokens: 47 } 
+    };
+  }
+
+  calculateCost(model: string, usage: TokenUsage): number {
+    return calculateModelCost(model, usage.promptTokens, usage.completionTokens);
+  }
+
+  async verifyConnection(): Promise<ProviderHealthCheck> {
+    return {
+      healthy: true,
+      latencyMs: 80
+    };
+  }
+}

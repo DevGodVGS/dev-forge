@@ -1,0 +1,21 @@
+{
+  "name": "@devforge/tests",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "node dist/run-all-tests.js",
+    "build": "tsc -b",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@devforge/shared-types": "workspace:*",
+    "@devforge/database": "workspace:*",
+    "@devforge/ai-core": "workspace:*",
+    "@devforge/agent-core": "workspace:*",
+    "@devforge/github-client": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.12",
+    "typescript": "^5.4.5"
+  }
+}

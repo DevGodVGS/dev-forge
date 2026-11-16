@@ -1,0 +1,353 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  OWNER
+  ADMIN
+  ENGINEER
+  VIEWER
+}
+
+enum FindingSeverity {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+  INFORMATIONAL
+}
+
+enum FindingCategory {
+  SECURITY
+  BACKEND
+  FRONTEND
+  ARCHITECTURE
+  PERFORMANCE
+  EDGE_CASES
+  TESTING
+}
+
+enum FindingConfidence {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum FindingStatus {
+  OPEN
+  TRIAGED
+  RESOLVED
+  IGNORED
+}
+
+enum AuditStatus {
+  QUEUED
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+enum PullRequestStatus {
+  OPEN
+  CLOSED
+  MERGED
+}
+
+enum AIReviewVerdict {
+  APPROVE
+  REQUEST_CHANGES
+  COMMENT
+}
+
+enum HumanApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum AIProviderName {
+  ANTHROPIC
+  OPENAI
+  GEMINI
+}
+
+enum WorkflowType {
+  REPOSITORY_AUDIT
+  ISSUE_REMEDIATION
+  PR_REVIEW
+}
+
+enum WorkflowStatus {
+  PENDING
+  RUNNING
+  SUCCESS
+  FAILED
+  CANCELLED
+}
+
+enum AgentRole {
+  SECURITY_AUDITOR
+  BACKEND_AUDITOR
+  FRONTEND_AUDITOR
+  ARCHITECTURE_AUDITOR
+  PERFORMANCE_AUDITOR
+  EDGE_CASE_AUDITOR
+  TEST_AUDITOR
+  REMEDIATION_AGENT
+  PR_REVIEWER_AGENT
+  CORRECTION_AGENT
+  INTEGRATION_AGENT
+}
+
+model User {
+  id           String        @id @default(uuid())
+  email        String        @unique
+  passwordHash String
+  name         String
+  avatarUrl    String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  memberships  Membership[]
+  auditLogs    AuditLog[]
+
+  @@map("users")
+}
+
+model Organization {
+  id             String               @id @default(uuid())
+  name           String
+  slug           String               @unique
+  plan           String               @default("FREE")
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  memberships    Membership[]
+  installations  GitHubInstallation[]
+  repositories   Repository[]
+  providerConfigs AIProviderConfig[]
+  workflows      WorkflowExecution[]
+  auditLogs      AuditLog[]
+
+  @@map("organizations")
+}
+
+model Membership {
+  id             String       @id @default(uuid())
+  userId         String
+  organizationId String
+  role           UserRole     @default(ENGINEER)
+  createdAt      DateTime     @default(now())
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+  @@map("memberships")
+}
+
+model GitHubInstallation {
+  id             String        @id @default(uuid())
+  organizationId String
+  installationId Int           @unique
+  accountName    String
+  targetType     String
+  encryptedTokens String
+  createdAt      DateTime      @default(now())
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  repositories   Repository[]
+
+  @@map("github_installations")
+}
+
+model Repository {
+  id             String             @id @default(uuid())
+  organizationId String
+  installationId String
+  githubRepoId   Int                @unique
+  fullName       String
+  defaultBranch  String             @default("main")
+  isPrivate      Boolean            @default(false)
+  cloneUrl       String
+  language       String?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  installation   GitHubInstallation @relation(fields: [installationId], references: [id], onDelete: Cascade)
+  audits         AuditRun[]
+  findings       Finding[]
+  pullRequests   PullRequest[]
+  workflows      WorkflowExecution[]
+
+  @@map("repositories")
+}
+
+model AuditRun {
+  id           String          @id @default(uuid())
+  repositoryId String
+  triggerType  String          @default("MANUAL")
+  status       AuditStatus     @default(QUEUED)
+  commitSha    String
+  branch       String
+  summary      String?
+  score        Int?
+  startedAt    DateTime        @default(now())
+  completedAt  DateTime?
+  repository   Repository      @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  findings     Finding[]
+  coverages    AuditCoverage[]
+
+  @@map("audit_runs")
+}
+
+model AuditCoverage {
+  id            String          @id @default(uuid())
+  auditRunId    String
+  category      FindingCategory
+  filesAnalyzed Int             @default(0)
+  score         Int             @default(100)
+  auditRun      AuditRun        @relation(fields: [auditRunId], references: [id], onDelete: Cascade)
+
+  @@map("audit_coverages")
+}
+
+model Finding {
+  id                 String            @id @default(uuid())
+  auditRunId         String
+  repositoryId       String
+  title              String
+  description        String
+  category           FindingCategory
+  severity           FindingSeverity
+  confidence         FindingConfidence @default(HIGH)
+  filePath           String
+  lineNumber         Int?
+  evidence           String
+  recommendation     String
+  acceptanceCriteria String[]
+  status             FindingStatus     @default(OPEN)
+  githubIssueId      Int?
+  githubIssueUrl     String?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  auditRun           AuditRun          @relation(fields: [auditRunId], references: [id], onDelete: Cascade)
+  repository         Repository        @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+
+  @@map("findings")
+}
+
+model PullRequest {
+  id                  String              @id @default(uuid())
+  repositoryId        String
+  githubPrNumber      Int
+  title               String
+  body                String
+  sourceBranch        String
+  targetBranch        String
+  status              PullRequestStatus   @default(OPEN)
+  authorLogin         String
+  aiReviewStatus      AIReviewVerdict     @default(APPROVE)
+  humanApprovalStatus HumanApprovalStatus @default(PENDING)
+  htmlUrl             String
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  repository          Repository          @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  reviewIterations    ReviewIteration[]
+
+  @@unique([repositoryId, githubPrNumber])
+  @@map("pull_requests")
+}
+
+model ReviewIteration {
+  id              String          @id @default(uuid())
+  pullRequestId   String
+  iterationNumber Int
+  reviewerAgent   String
+  verdict         AIReviewVerdict
+  summary         String
+  commitSha       String
+  createdAt       DateTime        @default(now())
+  pullRequest     PullRequest     @relation(fields: [pullRequestId], references: [id], onDelete: Cascade)
+  comments        ReviewComment[]
+
+  @@map("review_iterations")
+}
+
+model ReviewComment {
+  id           String          @id @default(uuid())
+  iterationId  String
+  filePath     String
+  lineNumber   Int
+  diffHunk     String
+  body         String
+  severity     FindingSeverity
+  status       String          @default("OPEN")
+  iteration    ReviewIteration @relation(fields: [iterationId], references: [id], onDelete: Cascade)
+
+  @@map("review_comments")
+}
+
+model AIProviderConfig {
+  id             String         @id @default(uuid())
+  organizationId String
+  provider       AIProviderName
+  encryptedKey   String
+  isDefault      Boolean        @default(false)
+  activeModels   String[]
+  createdAt      DateTime       @default(now())
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, provider])
+  @@map("ai_provider_configs")
+}
+
+model WorkflowExecution {
+  id             String         @id @default(uuid())
+  organizationId String
+  repositoryId   String
+  workflowType   WorkflowType
+  status         WorkflowStatus @default(PENDING)
+  inputPayload   Json
+  outputPayload  Json?
+  startedAt      DateTime       @default(now())
+  completedAt    DateTime?
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  repository     Repository     @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  steps          WorkflowStep[]
+
+  @@map("workflow_executions")
+}
+
+model WorkflowStep {
+  id                  String            @id @default(uuid())
+  workflowExecutionId String
+  stepName            String
+  agentRole           AgentRole
+  status              WorkflowStatus    @default(PENDING)
+  input               Json
+  output              Json?
+  tokensUsed          Int               @default(0)
+  costEstimateUsd     Float             @default(0.0)
+  startedAt           DateTime          @default(now())
+  completedAt         DateTime?
+  workflowExecution   WorkflowExecution @relation(fields: [workflowExecutionId], references: [id], onDelete: Cascade)
+
+  @@map("workflow_steps")
+}
+
+model AuditLog {
+  id             String       @id @default(uuid())
+  organizationId String
+  actorId        String
+  action         String
+  targetResource String
+  metadata       Json?
+  ipAddress      String?
+  createdAt      DateTime     @default(now())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  actor          User         @relation(fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@map("audit_logs")
+}
