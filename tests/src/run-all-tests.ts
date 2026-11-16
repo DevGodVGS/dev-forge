@@ -9,6 +9,7 @@ import { testDbPrisma } from './db-prisma.test';
 import { testGitHubClientLive } from './github-live.test';
 import { testWebRepositoryOnboarding } from './web-onboarding.test';
 import { testSettingsProviderCredentials } from './settings-providers.test';
+import { testGitBranchLifecycle } from './branch-lifecycle.test';
 
 async function main() {
   console.log('\n================================================================');
@@ -24,6 +25,7 @@ async function main() {
     testGitHubClientLive,
     testWebRepositoryOnboarding,
     testSettingsProviderCredentials,
+    testGitBranchLifecycle,
     testApiE2E,
     testWorkflowA,
     testWorkflowB
